@@ -3,13 +3,15 @@ import neural_network as neuro
 import pyqtgraph as pg
 
 mode = int(input("what mode do you want to run the program in? (1) training or (2) out of sample testing or (3) prediction: "))
+new_data = input("do u want to update the dataset? ")
 tickers = dc.ticker_request()
 if mode == 1:
-    dc.dataset(tickers)
-    dataset_path = r"D:\algorithimic trading\dataset.json"
-    dc.restructure_dataset(dataset_path)
-    dc.moving_average("dataset.json")
-    dc.percentage_change("dataset.json")
+    if new_data == "yes":
+        dc.dataset(tickers)
+        dataset_path = r"D:\machine-learning-project\algorithimic_trading\dataset.json"
+        dc.restructure_dataset(dataset_path)
+        dc.moving_average("dataset.json")
+        dc.percentage_change("dataset.json")
     neuro.prediction_neural_net()
 elif mode == 2:
     sp500_balance = 10000

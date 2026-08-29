@@ -6,6 +6,7 @@ from io import StringIO
 from datetime import datetime, timezone
 def dataset(tickers):##collect data for the strategy
     data = yf.download(tickers,period="1y",interval="1d")
+    data = data.dropna()
     data = data.to_json()
     with open("dataset.json","w") as file:
         json.dump(data,file,indent = 4)
@@ -86,15 +87,16 @@ def moving_average(dataset):#creates 5 day rolling average feature
                         
                         else:
                             ma = 0
-                    data[ticker][date]["moving_average"] = ma
+                    data[ticker][date]["Moving_Average"] = ma
         with open ("dataset.json","w") as file:
             json.dump(data, file,indent = 4 )
     elif dataset == "backtest_data.json":
         with open("backtest_data.json","r") as file:
             data = json.load(file)
-            i = 0 
+             
             ma = []
             for ticker in data:
+                i = 0
                 for date in data[ticker]:
                     dates= list(data[ticker].keys())
                     for i in range (len(dates)):            
@@ -117,7 +119,7 @@ def percentage_change(dataset):#creates percentage change feature
                     close_p = data[ticker][date]["Close"]    
                     open_p = data[ticker][date]["Open"]
                     percentage_change = ((close_p - open_p)/open_p)
-                    data[ticker][date]["percentage_change"] = percentage_change
+                    data[ticker][date]["Percentage_Change"] = percentage_change
             with open (dataset,"w") as file:
                 json.dump(data, file,indent = 4 )
         if dataset == "backtest_data.json":

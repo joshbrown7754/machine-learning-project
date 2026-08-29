@@ -10,38 +10,44 @@ def bubble_sort(arr):
             if arr[j] > arr[j+1]:
                 arr[j], arr[j+1] = arr[j+1], arr[j]
     return arr
-
-def max(datapoint):
-    with open("dataset.json","r") as file:
-        data = json.load(file)
-        high = 0
-        for ticker in data:
-            for dates in data[ticker]:
-                if datapoint == "Volume":
-                    if np.log10(data[ticker][dates][datapoint]) >= high:
-                        high = np.log10(data[ticker][dates][datapoint])
-                else:
-                    if data[ticker][dates][datapoint] >= high:
-                        high = data[ticker][dates][datapoint]
-                
-        return high
-def min(datapoint):
-    with open("dataset.json","r") as file:
-        data = json.load(file)
-        low = 999999999999
-        for ticker in data:
-            for dates in data[ticker]:
-                if datapoint == "Volume":
-                    if np.log10(data[ticker][dates][datapoint]) <= low:
-                        low = np.log10(data[ticker][dates][datapoint])
-                else:
-                    if data[ticker][dates][datapoint] <= low:
-                        low = data[ticker][dates][datapoint]
-        return low
-
-def normalize(x,max,min,):
-    normalized = (x-min)/(max-min)
-    return normalized
+def feature_mean (feature,count,data):
+    total = 0
+    for ticker in data:
+        for dates in data[ticker]:
+            if feature == "Volume":
+                total = total + np.log10(data[ticker][dates][feature])
+            else:
+                total = total + data[ticker][dates][feature]
+    mean = total/count
+    return mean
+def standarad_deviation(feature,mean,count,data):
+    sumtot = 0
+    for ticker in data:
+        for dates in data[ticker]:
+            if feature == "Volume":     
+                sumtot = sumtot + (np.log10(data[ticker][dates][feature])-mean)**2
+            else:
+                sumtot = sumtot + (data[ticker][dates][feature]-mean)**2
+    variance = sumtot/count
+    deviation = variance**0.5
+    return deviation
+def standardize (feature,value,mean,deviation):
+    if feature == "Volume":
+        value = (np.log10(value) - mean)/deviation 
+    elif feature == "Open":
+        value = (value - mean)/deviation  
+    elif feature == "Close":
+        value = (value - mean)/deviation 
+    elif feature == "High":
+        value = (value - mean)/deviation 
+    elif feature == "Low":
+        value = (value - mean)/deviation
+    elif feature == "Moving_Average":
+        value = (value - mean)/deviation 
+    elif feature == "Percentage_Change":
+        value = (value - mean)/deviation 
+    return value
+    
 def node_calc(inputs,weight,bias,final_out):
     if final_out == True:
         outputs = []
@@ -53,9 +59,9 @@ def node_calc(inputs,weight,bias,final_out):
     else:
         outputs = []
         for i in range (len(inputs)):
-            temp = inputs[i]*weight[i]+bias
+            temp = inputs[i]*weight[i]
             outputs.append(temp)
-        output = sum(outputs)
+        output = sum(outputs)+bias
         output = torch.nn.functional.leaky_relu(output, negative_slope=0.01)
         return output
 
@@ -212,7 +218,7 @@ def output_layer(inputs,weights,nodes):
     nodes["output_layer"] = {"node1":node1,"bias":bias}
     return output,nodes
 def backpropagation(nodes,weights):
-    learning_rate = 0.1
+    learning_rate = 0.01
     #input layer weight updates
     
     for i in range (len(weights["input_layer"]["bias"])):
@@ -269,17 +275,14 @@ def backpropagation(nodes,weights):
                 weights["output_layer"][nds]["w"+j] = float(weight)
     
 def prediction_neural_net(training = True,dataset = "dataset.json"):
-    with open("dataset.json","r") as file:
-            data = json.load(file)
-            maximums = []
-            minimums = []
-
-            datapoints = ["Open","Close","Volume","High","Low","moving_average"]
-            for i in range (len(datapoints)):
-                maximums.append(max(datapoints[i]))
-                minimums.append(min(datapoints[i]))
     with open ("weights.json","r") as file:
         weights = json.load(file)
+    count = 0
+    with open (dataset,"r") as file:
+        data = json.load(file)
+        for ticker in data:
+            for dates in data[ticker]:
+                count = count + 1
     if training == True:
         nodes  = {
             "input_layer"  : "",
@@ -287,9 +290,25 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
             "layer3"       : "",
             "output_layer" : ""  
         }
-        avg_losses = deque(weights["graphdata"]["avg_losses"],maxlen=2000)
-        steps = deque(weights["graphdata"]["steps"],maxlen=2000)
-        avg_baseline_error = deque(weights["graphdata"]["avg_baseline_error"],maxlen=2000)
+        mean = []
+        deviation = []
+        mean.append(float(feature_mean("Open",count.data)))
+        mean.append(float(feature_mean("Close",count,data)))
+        mean.append(float(feature_mean("Volume",count,data)))
+        mean.append(float(feature_mean("High",count,data)))
+        mean.append(float(feature_mean("Low",count,data)))
+        mean.append(float(feature_mean("Moving_Average",count,data)))
+        mean.append(float(feature_mean("Percentage_Change",count,data)))
+        deviation.append(float(standarad_deviation("Open",mean[0],count,data)))
+        deviation.append(float(standarad_deviation("Close",mean[1],count,data)))
+        deviation.append(float(standarad_deviation("Volume",mean[2],count,data)))
+        deviation.append(float(standarad_deviation("High",mean[3],count,data)))
+        deviation.append(float(standarad_deviation("Low",mean[4],count,data)))
+        deviation.append(float(standarad_deviation("Moving_Average",mean[5],count,data)))
+        deviation.append(float(standarad_deviation("Percentage_Change",mean[6],count,data)))
+        avg_losses = deque(weights["graphdata"]["avg_losses"],maxlen=25000)
+        steps = deque(weights["graphdata"]["steps"],maxlen=25000)
+        avg_baseline_error = deque(weights["graphdata"]["avg_baseline_error"],maxlen=25000)
         epoch = weights["epoch"]
         temp = 0
         losses = []
@@ -316,26 +335,30 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
                         dates= list(data[ticker].keys())
                         if i != len(dates) - 1:
                             targetdate = dates[i+1]
-                            target = data[ticker][targetdate]["percentage_change"]
-                    
+                            target = data[ticker][targetdate]["Percentage_Change"]
+                        
                         inputs = torch.tensor([
-                            normalize(float(data[ticker][date]["Open"]),maximums[0],minimums[0]),               #open
-                            normalize(float(data[ticker][date]["Close"]),maximums[1],minimums[1]),              #close
-                            normalize(np.log10(float(data[ticker][date]["Volume"])),maximums[2],minimums[2]),   #volume
-                            normalize(float(data[ticker][date]["High"]),maximums[3],minimums[3]),               #high
-                            normalize(float(data[ticker][date]["Low"]),maximums[4],minimums[4]),                #low
-                            float(data[ticker][date]["percentage_change"]),                                     #percentage change
-                            normalize((data[ticker][date]["moving_average"]),maximums[5],minimums[5])           #5-day moving average
+                            standardize("Open",float(data[ticker][date]["Open"]),mean[0],deviation[0]),                             #open
+                            standardize("Close",float(data[ticker][date]["Close"]),mean[1],deviation[1]),                           #Close
+                            standardize("Volume",float(np.log10(data[ticker][date]["Volume"])),mean[2],deviation[2]),               #Volume
+                            standardize("High",float(data[ticker][date]["High"]),mean[3],deviation[3]),                             #High
+                            standardize("Low",float(data[ticker][date]["Low"]),mean[4],deviation[4]),                               #Low
+                            standardize("Moving_Average",float(data[ticker][date]["Moving_Average"]),mean[5],deviation[5]),         #5-day moving average
+                            standardize("Percentage_Change",float(data[ticker][date]["Percentage_Change"]),mean[6],deviation[6]),   #percentage change
+
                         ])
+                        #breakpoint()
                         final_output,nodes = input_layer(inputs,weights,nodes)
                         loss = (final_output-target)**2
                         loss.backward()
+                        #breakpoint()
                         backpropagation(nodes,weights)
+                        #breakpoint()#7
                         step =step+1
                         losses.append(float(loss))
                         bse = (target-0.00)**2 
                         baseline_error.append(float(bse))
-                        if step >= 100: 
+                        if step >= 2000: 
                             amount = sum(losses)
                             avg = (amount/len(losses))**0.5
                             avg_losses.append(avg)
@@ -361,6 +384,7 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
             print("total epochs :",epoch)
             weights["epoch"] = epoch
             
+            
             weights["graphdata"]["avg_losses"] = list(avg_losses)
             weights["graphdata"]["steps"] = list(steps)
             weights["graphdata"]["avg_baseline_error"] = list(avg_baseline_error)
@@ -369,27 +393,26 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
 
     if training == False:
         outputs = []
-        choice = []
-        with open(dataset,"r") as file:
-            data = json.load(file)
-            for ticker in data:
-                for date in data[ticker]:
-                    inputs = {
-                        "op" : normalize(float(data[date][ticker]["Open"]),maximums[0],minimums[0]),                 #open
-                        "cl" : normalize(float(data[date][ticker]["Close"]),maximums[1],minimums[1]),                #close
-                        "vo" : normalize(np.log10(float(data[date][ticker]["Volume"])),maximums[2],minimums[2]),     #volume
-                        "hi" : normalize(float(data[date][ticker]["High"]),maximums[3],minimums[3]),                 #high
-                        "lo" : normalize(float(data[date][ticker]["Low"]),maximums[4],minimums[4]),                  #low
-                        "pc" : float(data[date][ticker]["percentage_change"]),                                       #percentage change
-                        "ma" : normalize((data[date][ticker]["moving_average"]),maximums[5],minimums[5])             #moving average
-                    }
+        # choice = []
+        # with open(dataset,"r") as file:
+        #     data = json.load(file)
+        #     for ticker in data:
+        #         for date in data[ticker]:
+        #             inputs = {
+        #                 "op" : normalize(float(data[date][ticker]["Open"]),maximums[0],minimums[0]),                 #open
+        #                 "cl" : normalize(float(data[date][ticker]["Close"]),maximums[1],minimums[1]),                #Close
+        #                 "vo" : normalize(np.log10(float(data[date][ticker]["Volume"])),maximums[2],minimums[2]),     #Volume
+        #                 "hi" : normalize(float(data[date][ticker]["High"]),maximums[3],minimums[3]),                 #High
+        #                 "lo" : normalize(float(data[date][ticker]["Low"]),maximums[4],minimums[4]),                  #Low
+        #                 "pc" : float(data[date][ticker]["Percentage_Change"]),                                       #percentage change
+        #                 "ma" : normalize((data[date][ticker]["Moving_Average"]),maximums[5],minimums[5])             #moving average
+        #             }
                     
-                    final_output = input_layer(inputs)
-                    outputs.append(final_output)
-                    outputs = bubble_sort(outputs)
-                    choice.append(outputs[0])
+        #             final_output = input_layer(inputs)
+        #             outputs.append(final_output)
+        #             outputs = bubble_sort(outputs)
+        #             choice.append(outputs[0])
                     
-            return choice       
-        #switch normalisation to standardisation inputs to small making gradients tiny so extremeky little change
-        
+        #     return choice       
+        # #switch normalisation to standardisation inputs to small making gradients tiny so extremeky little change
         
