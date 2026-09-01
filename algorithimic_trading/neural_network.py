@@ -2,6 +2,7 @@ import json
 import torch 
 import numpy as np
 import pyqtgraph as pg
+import time
 from collections import deque
 def bubble_sort(arr):
     n = len(arr)
@@ -65,157 +66,29 @@ def node_calc(inputs,weight,bias,final_out):
         output = torch.nn.functional.leaky_relu(output, negative_slope=0.01)
         return output
 
-def input_layer(inputs,weights,nodes):
-    bias = torch.tensor([
-        weights["input_layer"]["bias"]["b0"],
-        weights["input_layer"]["bias"]["b1"],
-        weights["input_layer"]["bias"]["b2"],
-        weights["input_layer"]["bias"]["b3"],
-        ],dtype=torch.float32,requires_grad=True)
-    node1  = torch.tensor([
-        weights["input_layer"]["node1"]["w0"],
-        weights["input_layer"]["node1"]["w1"],
-        weights["input_layer"]["node1"]["w2"],
-        weights["input_layer"]["node1"]["w3"],
-        weights["input_layer"]["node1"]["w4"],
-        weights["input_layer"]["node1"]["w5"],
-        weights["input_layer"]["node1"]["w6"],
-    ],requires_grad=True)
-    node2  = torch.tensor([
-        weights["input_layer"]["node2"]["w0"],
-        weights["input_layer"]["node2"]["w1"],
-        weights["input_layer"]["node2"]["w2"],
-        weights["input_layer"]["node2"]["w3"],
-        weights["input_layer"]["node2"]["w4"],
-        weights["input_layer"]["node2"]["w5"],
-        weights["input_layer"]["node2"]["w6"]
-        ],requires_grad=True)
-    node3  = torch.tensor([
-        weights["input_layer"]["node3"]["w0"],
-        weights["input_layer"]["node3"]["w1"],
-        weights["input_layer"]["node3"]["w2"],
-        weights["input_layer"]["node3"]["w3"],
-        weights["input_layer"]["node3"]["w4"],
-        weights["input_layer"]["node3"]["w5"],
-        weights["input_layer"]["node3"]["w6"]    
-        ],requires_grad=True)
-    node4  = torch.tensor([
-        weights["input_layer"]["node4"]["w0"],
-        weights["input_layer"]["node4"]["w1"],
-        weights["input_layer"]["node4"]["w2"],
-        weights["input_layer"]["node4"]["w3"],
-        weights["input_layer"]["node4"]["w4"],
-        weights["input_layer"]["node4"]["w5"],
-        weights["input_layer"]["node4"]["w6"]
-        ],requires_grad=True)
-    x1 = node_calc(inputs,node1,bias[0],False) 
-    x2 = node_calc(inputs,node2,bias[1],False)
-    x3 = node_calc(inputs,node3,bias[2],False)
-    x4 = node_calc(inputs,node4,bias[3],False)
+def input_layer(inputs,weights,nodes:dict):
+    x1 = node_calc(inputs,nodes["input_layer"]["node1"],nodes["input_layer"]["bias"][0],False) 
+    x2 = node_calc(inputs,nodes["input_layer"]["node2"],nodes["input_layer"]["bias"][1],False)
+    x3 = node_calc(inputs,nodes["input_layer"]["node3"],nodes["input_layer"]["bias"][2],False)
+    x4 = node_calc(inputs,nodes["input_layer"]["node4"],nodes["input_layer"]["bias"][3],False)
     outputs = [x1,x2,x3,x4]
-    nodes["input_layer"] = {"bias":bias,
-                            "node1":node1,
-                            "node2":node2,
-                            "node3":node3,
-                            "node4":node4
-                            }
     return layer2(outputs,weights,nodes)
-def layer2(inputs,weights,nodes):
-    bias = torch.tensor([
-        weights["layer2"]["bias"]["b0"],
-        weights["layer2"]["bias"]["b1"],
-        weights["layer2"]["bias"]["b2"],
-        weights["layer2"]["bias"]["b3"],
-        ],dtype=torch.float32,requires_grad=True)
-    node1 = torch.tensor([
-        weights["layer2"]["node1"]["w0"],
-        weights["layer2"]["node1"]["w1"],
-        weights["layer2"]["node1"]["w2"],
-        weights["layer2"]["node1"]["w3"]
-    ],requires_grad=True)
-    node2 = torch.tensor([
-        weights["layer2"]["node2"]["w0"],
-        weights["layer2"]["node2"]["w1"],
-        weights["layer2"]["node2"]["w2"],
-        weights["layer2"]["node2"]["w3"]
-    ],requires_grad=True)
-    node3 = torch.tensor([
-        weights["layer2"]["node3"]["w0"],
-        weights["layer2"]["node3"]["w1"],
-        weights["layer2"]["node3"]["w2"],
-        weights["layer2"]["node3"]["w3"]
-    ],requires_grad=True)
-    node4 = torch.tensor([
-        weights["layer2"]["node4"]["w0"],
-        weights["layer2"]["node4"]["w1"],
-        weights["layer2"]["node4"]["w2"],
-        weights["layer2"]["node4"]["w3"]
-    ],requires_grad=True)
-    x1 = node_calc(inputs,node1,bias[0],False) 
-    x2 = node_calc(inputs,node2,bias[1],False)
-    x3 = node_calc(inputs,node3,bias[2],False)
-    x4 = node_calc(inputs,node4,bias[3],False)
+def layer2(inputs,weights,nodes:dict):
+    x1 = node_calc(inputs,nodes["layer2"]["node1"],nodes["layer2"]["bias"][0],False) 
+    x2 = node_calc(inputs,nodes["layer2"]["node2"],nodes["layer2"]["bias"][1],False)
+    x3 = node_calc(inputs,nodes["layer2"]["node3"],nodes["layer2"]["bias"][2],False)
+    x4 = node_calc(inputs,nodes["layer2"]["node4"],nodes["layer2"]["bias"][3],False)
     outputs = [x1,x2,x3,x4]
-    nodes["layer2"] = {"bias":bias,
-                        "node1":node1,
-                        "node2":node2,
-                        "node3":node3,
-                        "node4":node4
-                        }
     return layer3(outputs,weights,nodes)
-def layer3(inputs,weights,nodes):
-    bias = torch.tensor([
-         weights["layer3"]["bias"]["b0"],
-         weights["layer3"]["bias"]["b1"],
-         weights["layer3"]["bias"]["b2"],
-         weights["layer3"]["bias"]["b3"],
-        ],dtype=torch.float32,requires_grad=True)    
-    node1 = torch.tensor([
-        weights["layer3"]["node1"]["w0"],
-        weights["layer3"]["node1"]["w1"],
-        weights["layer3"]["node1"]["w2"],
-        weights["layer3"]["node1"]["w3"]
-    ],requires_grad=True)
-    node2 = torch.tensor([
-        weights["layer3"]["node2"]["w0"],
-        weights["layer3"]["node2"]["w1"],
-        weights["layer3"]["node2"]["w2"],
-        weights["layer3"]["node2"]["w3"]
-    ],requires_grad=True)
-    node3 = torch.tensor([
-        weights["layer3"]["node3"]["w0"],
-        weights["layer3"]["node3"]["w1"],
-        weights["layer3"]["node3"]["w2"],
-        weights["layer3"]["node3"]["w3"]
-    ],requires_grad=True)
-    node4 = torch.tensor([
-        weights["layer3"]["node4"]["w0"],
-        weights["layer3"]["node4"]["w1"],
-        weights["layer3"]["node4"]["w2"],
-        weights["layer3"]["node4"]["w3"]
-    ],requires_grad=True)
-    x1 = node_calc(inputs,node1,bias[0],False) 
-    x2 = node_calc(inputs,node2,bias[1],False)
-    x3 = node_calc(inputs,node3,bias[2],False)
-    x4 = node_calc(inputs,node4,bias[3],False)
+def layer3(inputs,weights,nodes:dict):
+    x1 = node_calc(inputs,nodes["layer3"]["node1"],nodes["layer3"]["bias"][0],False) 
+    x2 = node_calc(inputs,nodes["layer3"]["node2"],nodes["layer3"]["bias"][1],False)
+    x3 = node_calc(inputs,nodes["layer3"]["node3"],nodes["layer3"]["bias"][2],False)
+    x4 = node_calc(inputs,nodes["layer3"]["node4"],nodes["layer3"]["bias"][3],False)
     outputs = [x1,x2,x3,x4]
-    nodes["layer3"] = {"bias":bias,
-                        "node1":node1,
-                        "node2":node2,
-                        "node3":node3,
-                        "node4":node4
-                        }
     return output_layer(outputs,weights,nodes)
-def output_layer(inputs,weights,nodes):
-    bias = torch.tensor(weights["output_layer"]["bias"]["b0"],dtype=torch.float32,requires_grad=True)
-    node1 = torch.tensor([
-        weights["output_layer"]["node1"]["w0"],
-        weights["output_layer"]["node1"]["w1"],
-        weights["output_layer"]["node1"]["w2"],
-        weights["output_layer"]["node1"]["w3"]
-    ],requires_grad=True)
-    output = node_calc(inputs,node1,bias,True)    
-    nodes["output_layer"] = {"node1":node1,"bias":bias}
+def output_layer(inputs,weights,nodes:dict):
+    output = node_calc(inputs,nodes["output_layer"]["node1"],nodes["output_layer"]["bias"],True)    
     return output,nodes
 def backpropagation(nodes,weights):
     learning_rate = 0.01
@@ -278,21 +151,134 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
     with open ("weights.json","r") as file:
         weights = json.load(file)
     count = 0
+    nodes = {
+        "input_layer":{
+            "bias": torch.tensor([
+                weights["input_layer"]["bias"]["b0"],
+                weights["input_layer"]["bias"]["b1"],
+                weights["input_layer"]["bias"]["b2"],
+                weights["input_layer"]["bias"]["b3"],
+                ],dtype=torch.float32,requires_grad=True),
+            "node1": torch.tensor([
+                weights["input_layer"]["node1"]["w0"],
+                weights["input_layer"]["node1"]["w1"],
+                weights["input_layer"]["node1"]["w2"],
+                weights["input_layer"]["node1"]["w3"],
+                weights["input_layer"]["node1"]["w4"],
+                weights["input_layer"]["node1"]["w5"],
+                weights["input_layer"]["node1"]["w6"],
+            ],requires_grad=True),
+            "node2"  :torch.tensor([
+                weights["input_layer"]["node2"]["w0"],
+                weights["input_layer"]["node2"]["w1"],
+                weights["input_layer"]["node2"]["w2"],
+                weights["input_layer"]["node2"]["w3"],
+                weights["input_layer"]["node2"]["w4"],
+                weights["input_layer"]["node2"]["w5"],
+                weights["input_layer"]["node2"]["w6"]
+                ],requires_grad=True),
+            "node3": torch.tensor([
+                weights["input_layer"]["node3"]["w0"],
+                weights["input_layer"]["node3"]["w1"],
+                weights["input_layer"]["node3"]["w2"],
+                weights["input_layer"]["node3"]["w3"],
+                weights["input_layer"]["node3"]["w4"],
+                weights["input_layer"]["node3"]["w5"],
+                weights["input_layer"]["node3"]["w6"]    
+                ],requires_grad=True),
+            "node4"  :torch.tensor([
+                weights["input_layer"]["node4"]["w0"],
+                weights["input_layer"]["node4"]["w1"],
+                weights["input_layer"]["node4"]["w2"],
+                weights["input_layer"]["node4"]["w3"],
+                weights["input_layer"]["node4"]["w4"],
+                weights["input_layer"]["node4"]["w5"],
+                weights["input_layer"]["node4"]["w6"]
+                ],requires_grad=True)
+        },
+        "layer2":{
+            "bias" :torch.tensor([
+                    weights["layer2"]["bias"]["b0"],
+                    weights["layer2"]["bias"]["b1"],
+                    weights["layer2"]["bias"]["b2"],
+                    weights["layer2"]["bias"]["b3"],
+                    ],dtype=torch.float32,requires_grad=True),
+            "node1" :torch.tensor([
+                    weights["layer2"]["node1"]["w0"],
+                    weights["layer2"]["node1"]["w1"],
+                    weights["layer2"]["node1"]["w2"],
+                    weights["layer2"]["node1"]["w3"]
+                ],requires_grad=True),
+            "node2" : torch.tensor([
+                    weights["layer2"]["node2"]["w0"],
+                    weights["layer2"]["node2"]["w1"],
+                    weights["layer2"]["node2"]["w2"],
+                    weights["layer2"]["node2"]["w3"]
+                ],requires_grad=True),
+            "node3" : torch.tensor([
+                    weights["layer2"]["node3"]["w0"],
+                    weights["layer2"]["node3"]["w1"],
+                    weights["layer2"]["node3"]["w2"],
+                    weights["layer2"]["node3"]["w3"]
+                ],requires_grad=True),
+            "node4" :torch.tensor([
+                    weights["layer2"]["node4"]["w0"],
+                    weights["layer2"]["node4"]["w1"],
+                    weights["layer2"]["node4"]["w2"],
+                    weights["layer2"]["node4"]["w3"]
+                ],requires_grad=True)
+        },
+        "layer3":{
+            "bias" : torch.tensor([
+                weights["layer3"]["bias"]["b0"],
+                weights["layer3"]["bias"]["b1"],
+                weights["layer3"]["bias"]["b2"],
+                weights["layer3"]["bias"]["b3"],
+                ],dtype=torch.float32,requires_grad=True),    
+            "node1" : torch.tensor([
+                weights["layer3"]["node1"]["w0"],
+                weights["layer3"]["node1"]["w1"],
+                weights["layer3"]["node1"]["w2"],
+                weights["layer3"]["node1"]["w3"]
+                ],requires_grad=True),
+            "node2" : torch.tensor([
+                    weights["layer3"]["node2"]["w0"],
+                    weights["layer3"]["node2"]["w1"],
+                    weights["layer3"]["node2"]["w2"],
+                    weights["layer3"]["node2"]["w3"]
+                ],requires_grad=True),
+            "node3" : torch.tensor([
+                    weights["layer3"]["node3"]["w0"],
+                    weights["layer3"]["node3"]["w1"],
+                    weights["layer3"]["node3"]["w2"],
+                    weights["layer3"]["node3"]["w3"]
+                ],requires_grad=True),
+            "node4" : torch.tensor([
+                    weights["layer3"]["node4"]["w0"],
+                    weights["layer3"]["node4"]["w1"],
+                    weights["layer3"]["node4"]["w2"],
+                    weights["layer3"]["node4"]["w3"]
+                ],requires_grad=True)
+        },
+        "output_layer" :{
+            "bias" : torch.tensor(weights["output_layer"]["bias"]["b0"],dtype=torch.float32,requires_grad=True),
+            "node1" : torch.tensor([
+                weights["output_layer"]["node1"]["w0"],
+                weights["output_layer"]["node1"]["w1"],
+                weights["output_layer"]["node1"]["w2"],
+                weights["output_layer"]["node1"]["w3"]
+            ],requires_grad=True),
+        }      
+    }
     with open (dataset,"r") as file:
         data = json.load(file)
         for ticker in data:
             for dates in data[ticker]:
                 count = count + 1
     if training == True:
-        nodes  = {
-            "input_layer"  : "",
-            "layer2"       : "",
-            "layer3"       : "",
-            "output_layer" : ""  
-        }
         mean = []
         deviation = []
-        mean.append(float(feature_mean("Open",count.data)))
+        mean.append(float(feature_mean("Open",count,data)))
         mean.append(float(feature_mean("Close",count,data)))
         mean.append(float(feature_mean("Volume",count,data)))
         mean.append(float(feature_mean("High",count,data)))
@@ -329,6 +315,7 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
         app.processEvents()
         try:
             while True:
+                start_time = time.perf_counter()
                 start_weight = weights["input_layer"]["node1"]["w2"]
                 for ticker in data:
                     for i,date in enumerate(data[ticker]):
@@ -347,13 +334,14 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
                             standardize("Percentage_Change",float(data[ticker][date]["Percentage_Change"]),mean[6],deviation[6]),   #percentage change
 
                         ])
-                        #breakpoint()
                         final_output,nodes = input_layer(inputs,weights,nodes)
                         loss = (final_output-target)**2
                         loss.backward()
-                        #breakpoint()
                         backpropagation(nodes,weights)
-                        #breakpoint()#7
+                        for layer in nodes.values():
+                            for node in layer.values():
+                                if node.grad is not None:
+                                    node.grad.zero_()
                         step =step+1
                         losses.append(float(loss))
                         bse = (target-0.00)**2 
@@ -366,7 +354,7 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
                             avg = (amount/len(baseline_error))**0.5
                             avg_baseline_error.append(avg)
                             steps.append(step)
-                            losses.clear
+                            losses.clear()
                         if epoch > temp:
                             label.setText(f"epoch: {epoch:.6f}")
                             curve1.setData(steps,avg_losses)
@@ -377,7 +365,8 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
                 epoch = epoch+1            
                 print(epoch)
                 end_weight = weights["input_layer"]["node1"]["w2"]
-
+                end_time = time.perf_counter()
+                print(f"Epoch took {end_time - start_time:.2f} seconds")
 
         except KeyboardInterrupt:
             print("training paused")
@@ -393,26 +382,27 @@ def prediction_neural_net(training = True,dataset = "dataset.json"):
 
     if training == False:
         outputs = []
-        # choice = []
-        # with open(dataset,"r") as file:
-        #     data = json.load(file)
-        #     for ticker in data:
-        #         for date in data[ticker]:
-        #             inputs = {
-        #                 "op" : normalize(float(data[date][ticker]["Open"]),maximums[0],minimums[0]),                 #open
-        #                 "cl" : normalize(float(data[date][ticker]["Close"]),maximums[1],minimums[1]),                #Close
-        #                 "vo" : normalize(np.log10(float(data[date][ticker]["Volume"])),maximums[2],minimums[2]),     #Volume
-        #                 "hi" : normalize(float(data[date][ticker]["High"]),maximums[3],minimums[3]),                 #High
-        #                 "lo" : normalize(float(data[date][ticker]["Low"]),maximums[4],minimums[4]),                  #Low
-        #                 "pc" : float(data[date][ticker]["Percentage_Change"]),                                       #percentage change
-        #                 "ma" : normalize((data[date][ticker]["Moving_Average"]),maximums[5],minimums[5])             #moving average
-        #             }
+        choice = []
+        with open(dataset,"r") as file:
+            data = json.load(file)
+            for ticker in data:
+                for date in data[ticker]:
+                    inputs = {
+                        "op" : standardize(float(data[date][ticker]["Open"]),mean[0],deviation[0]),                 #open
+                        "cl" : standardize(float(data[date][ticker]["Close"]),mean[1],deviation[1]),                #Close
+                        "vo" : standardize(np.log10(float(data[date][ticker]["Volume"])),mean[2],deviation[2]),     #Volume
+                        "hi" : standardize(float(data[date][ticker]["High"]),mean[3],deviation[3]),                 #High
+                        "lo" : standardize(float(data[date][ticker]["Low"]),mean[4],deviation[4]),                  #Low
+                        "ma" : standardize((data[date][ticker]["Moving_Average"]),mean[5],deviation[5]),            #moving average
+                        "pc" : standardize(float(data[date][ticker]["Percentage_Change"],mean[6],deviation[6]))     #percentage change
+
+                    }
                     
-        #             final_output = input_layer(inputs)
-        #             outputs.append(final_output)
-        #             outputs = bubble_sort(outputs)
-        #             choice.append(outputs[0])
+                    final_output = input_layer(inputs)
+                    outputs.append(final_output)
+                    outputs = bubble_sort(outputs)
+                    choice.append(outputs[0])
                     
-        #     return choice       
-        # #switch normalisation to standardisation inputs to small making gradients tiny so extremeky little change
+            return choice       
+        
         

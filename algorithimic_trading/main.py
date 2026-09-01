@@ -23,6 +23,7 @@ elif mode == 2:
     dc.moving_average("backtest_data.json")
     dc.percentage_change("backtest_data.json")
     app = pg.mkQApp("simple window")
+    network = neuro.prediction_neural_net(False,"backtest_data.json")
 
     win = pg.plot(title="sp 500 vs neauralnet prediction")
     win.setWindowTitle("sp 500 vs neauralnet prediction")
